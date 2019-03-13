@@ -38,8 +38,8 @@ public class MainActivity extends AppCompatActivity {
             public void subscribe(ObservableEmitter<String> emitter) throws Exception {
                 Log.i(TAG, "subscribe --> " + (Looper.myLooper() == Looper.getMainLooper()));
                 emitter.onNext("aaa");
-                emitter.onComplete();
                 emitter.onError(new RuntimeException("123123123"));
+                emitter.onComplete();
             }
         })
                 .switchUpThread(Observable.NEW_THREAD)

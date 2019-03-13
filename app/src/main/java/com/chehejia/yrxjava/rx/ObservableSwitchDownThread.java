@@ -1,8 +1,10 @@
 package com.chehejia.yrxjava.rx;
 
 import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
+
+import java.util.PriorityQueue;
+import java.util.Queue;
 
 /**
  * Created by deshui on 2019/03/08
@@ -11,7 +13,8 @@ public class ObservableSwitchDownThread<T> extends Observable<T> {
     private static final String TAG = "SwitchDownThread";
     final ObservableSource<T> source;
     private int threadId;
-    private Handler handler = new Handler();
+    private Handler mHandler = new Handler();
+    private Thread mThread;
 
     public ObservableSwitchDownThread(ObservableSource<T> source, int threadId) {
         Log.e(TAG, "ObservableSwitchDownThread --");
@@ -22,21 +25,29 @@ public class ObservableSwitchDownThread<T> extends Observable<T> {
     @Override
     protected void subscribeActual(Observer<? super T> observer) {
         Log.e(TAG, "subscribeActual -- threadId:" + threadId);
-        if (threadId == MAIN_THREAD) {
-            DownThreadObserver threadObserver = new DownThreadObserver(handler, observer);
-            source.subscribe(threadObserver);
-        }
+        DownThreadObserver threadObserver = new DownThreadObserver(mHandler, threadId, observer);
+        source.subscribe(threadObserver);
     }
 
     // -- 包装
-    class DownThreadObserver<T> implements Observer<T> {
+    class DownThreadObserver<T> implements Observer<T>, Runnable {
 
         private Handler handler;
+        private int threadId;
         private Observer<? super T> observer;
+        private Queue<Integer> queue;
 
-        public DownThreadObserver(Handler handler, Observer<? super T> observer) {
+        private T t;
+        private Throwable e;
+        private final int next = 0;
+        private final int error = 1;
+        private final int complete = 2;
+
+        public DownThreadObserver(Handler handler, int threadId, Observer<? super T> observer) {
             this.handler = handler;
             this.observer = observer;
+            this.threadId = threadId;
+            this.queue = new PriorityQueue<>();
         }
 
         @Override
@@ -46,33 +57,61 @@ public class ObservableSwitchDownThread<T> extends Observable<T> {
 
         @Override
         public void onNext(final T t) {
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    Log.e(TAG, "Down -- onNext -> " + (Looper.getMainLooper() == Looper.myLooper()) + ", t -->" + t);
-                    observer.onNext(t);
-                }
-            });
+            queue.add(next);
+            Log.e(TAG, "Down -- onNext : " + t);
+            this.t = t;
+            prepareRun();
         }
 
         @Override
         public void onError(final Throwable e) {
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    observer.onError(e);
-                }
-            });
+            queue.add(error);
+            Log.e(TAG, "Down -- onError : " + e);
+            this.e = e;
+            prepareRun();
         }
 
         @Override
         public void onComplete() {
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    observer.onComplete();
+            queue.add(complete);
+            Log.e(TAG, "Down -- onComplete");
+            prepareRun();
+        }
+
+        private synchronized void prepareRun() {
+            if (threadId == MAIN_THREAD) {
+                handler.post(this);
+            } else {
+                new Thread(this).start();
+            }
+        }
+
+        @Override
+        public void run() {
+            for (; ; ) {
+                Integer poll = queue.poll();
+                if (poll == null) {
+                    break;
+                } else {
+                    int status = poll;
+                    Log.e(TAG, "run -status-> " + status);
+                    switch (status) {
+                        case next: {
+                            observer.onNext(t);
+                            break;
+                        }
+                        case error: {
+                            observer.onError(e);
+                            break;
+                        }
+                        case complete: {
+                            observer.onComplete();
+                            break;
+                        }
+                    }
                 }
-            });
+
+            }
         }
     }
 }
