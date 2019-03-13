@@ -1,5 +1,6 @@
 package com.chehejia.yrxjava;
 
+import android.os.Looper;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -25,9 +26,9 @@ public class MainActivity extends AppCompatActivity {
     public void ok(View view) {
         // 以下2个是基础 ----------------
         // rx接口回调最简单的
-        simpleRxJava();
+//        simpleRxJava();
         // Rxjava链式流程
-        A.createA1().createA2().createA3().go();
+//        A.createA1().createA2().createA3().go();
         // ----------------
 
 
@@ -35,39 +36,38 @@ public class MainActivity extends AppCompatActivity {
         Observable.create(new ObservableOnSubscribe<String>() {
             @Override
             public void subscribe(ObservableEmitter<String> emitter) throws Exception {
-                Log.e(TAG, "Observable.subscribe -- subscribe " + emitter);
+                Log.i(TAG, "subscribe --> " + (Looper.myLooper() == Looper.getMainLooper()));
                 emitter.onNext("aaa");
-                emitter.onNext("bbb");
                 emitter.onComplete();
                 emitter.onError(new RuntimeException("123123123"));
             }
         })
-                .subscribeOn(1)
-                .subscribeOn(2)
+                .switchUpThread(Observable.NEW_THREAD)
+                .switchDownThread(Observable.MAIN_THREAD)
                 .subscribe(new Observer<String>() {
                     @Override
                     public void onSubscribe() {
-                        Log.e(TAG, "subscribe --  onSubscribe");
+                        Log.i(TAG, "subscribe --  onSubscribe");
                     }
 
                     @Override
                     public void onNext(String s) {
-                        Log.e(TAG, "subscribe --  onNext " + s);
+                        Log.i(TAG, "onNext --> " + (Looper.myLooper() == Looper.getMainLooper()) + ", s : " + s);
                     }
 
                     @Override
                     public void onError(Throwable e) {
-                        Log.e(TAG, "subscribe --  onError " + e);
+                        Log.i(TAG, "onError --> " + (Looper.myLooper() == Looper.getMainLooper()) + ", e : " + e);
                     }
 
                     @Override
                     public void onComplete() {
-                        Log.e(TAG, "subscribe --  onComplete ");
+                        Log.i(TAG, "onComplete --> " + (Looper.myLooper() == Looper.getMainLooper()));
                     }
                 });
 
         // rxjava保证原子性
-        testAtomic();
+//        testAtomic();
     }
 
     // rx接口回调最简单的 -------------------------

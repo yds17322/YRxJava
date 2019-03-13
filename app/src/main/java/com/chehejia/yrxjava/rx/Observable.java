@@ -6,22 +6,28 @@ import android.util.Log;
  * Created by deshui on 2019/03/05
  */
 public abstract class Observable<T> implements ObservableSource<T> {
+    private static final String TAG = "Observable";
+    public static final int MAIN_THREAD = 0;
+    public static final int NEW_THREAD = 1;
 
     // 创建
     public static <T> Observable<T> create(ObservableOnSubscribe<T> onSubscribe) {
-        Log.e("yds", "Observable --create");
+//        Log.e("yds", "Observable --create");
         return new ObservableCreate<>(onSubscribe);
     }
 
-    public Observable<T> subscribeOn(int threadId) {
-        Log.e("yds", "Observable --subscribeOn : " + threadId);
-        return new ObservableSubscribeOn<>(this, threadId);
+    public Observable<T> switchUpThread(int threadType) {
+        return new ObservableSwitchUpThread<>(this, threadType);
+    }
+
+    public Observable<T> switchDownThread(int threadType) {
+        return new ObservableSwitchDownThread<>(this, threadType);
     }
 
     // 执行
     @Override
     public void subscribe(Observer<? super T> observer) {
-        Log.e("yds", "Observable --subscribe");
+        Log.e(TAG, "--subscribe :: " + this);
         subscribeActual(observer);
     }
 
