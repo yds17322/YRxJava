@@ -15,6 +15,7 @@ public class ObservableSwitchUpThread<T> extends Observable<T> {
 
     public ObservableSwitchUpThread(ObservableSource<T> source, int threadId) {
         Log.e(TAG, "ObservableSwitchUpThread --");
+        // source == ObservableCreate
         this.source = source;
         this.threadId = threadId;
     }
@@ -22,6 +23,9 @@ public class ObservableSwitchUpThread<T> extends Observable<T> {
     @Override
     protected void subscribeActual(Observer<? super T> observer) {
         Log.e(TAG, "subscribeActual -- threadId:" + threadId);
+        // observer == DownThreadObserver
+        // source == ObservableCreate
+        // 通过UpThreadTask中run 的 source.subscribe(upThreadObserver); 把observer传入了ObservableCreate
         UpThreadObserver upThreadObserver = new UpThreadObserver(observer);
         UpThreadTask threadTask = new UpThreadTask(upThreadObserver);
         if (threadId == Observable.NEW_THREAD) {
@@ -36,6 +40,7 @@ public class ObservableSwitchUpThread<T> extends Observable<T> {
     class UpThreadObserver<T> implements Observer<T> {
         private Observer<? super T> observer;
 
+        // observer == DownThreadObserver
         public UpThreadObserver(Observer<? super T> observer) {
             this.observer = observer;
         }
@@ -47,6 +52,7 @@ public class ObservableSwitchUpThread<T> extends Observable<T> {
 
         @Override
         public void onNext(T t) {
+            // 调用DownThreadObserver中的onNext
             observer.onNext(t);
         }
 

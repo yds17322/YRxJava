@@ -18,12 +18,16 @@ public class ObservableSwitchDownThread<T> extends Observable<T> {
 
     public ObservableSwitchDownThread(ObservableSource<T> source, int threadId) {
         Log.e(TAG, "ObservableSwitchDownThread --");
+        // source == ObservableSwitchUpThread
         this.source = source;
         this.threadId = threadId;
     }
 
     @Override
     protected void subscribeActual(Observer<? super T> observer) {
+        // observer == Main中的回调
+        // source == ObservableSwitchUpThread
+        // 对observer封装，通过subscribe传入ObservableSwitchUpThread
         Log.e(TAG, "subscribeActual -- threadId:" + threadId);
         DownThreadObserver threadObserver = new DownThreadObserver(mHandler, threadId, observer);
         source.subscribe(threadObserver);
@@ -43,6 +47,7 @@ public class ObservableSwitchDownThread<T> extends Observable<T> {
         private final int error = 1;
         private final int complete = 2;
 
+        // observer == Main中的回调
         public DownThreadObserver(Handler handler, int threadId, Observer<? super T> observer) {
             this.handler = handler;
             this.observer = observer;
@@ -57,6 +62,8 @@ public class ObservableSwitchDownThread<T> extends Observable<T> {
 
         @Override
         public void onNext(final T t) {
+            // 调用main回调的onNext
+            // 这里分配子/主线程
             queue.add(next);
             Log.e(TAG, "Down -- onNext : " + t);
             this.t = t;

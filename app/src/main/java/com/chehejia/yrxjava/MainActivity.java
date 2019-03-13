@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
         // rx接口回调最简单的
 //        simpleRxJava();
         // Rxjava链式流程
-//        A.createA1().createA2().createA3().go();
+        A.createA1().createA2().createA3().go();
         // ----------------
 
 
@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void subscribe(ObservableEmitter<String> emitter) throws Exception {
                 Log.i(TAG, "subscribe --> " + (Looper.myLooper() == Looper.getMainLooper()));
+                // 调用ObservableCreate中CreateEmitter的onNext
                 emitter.onNext("aaa");
                 emitter.onError(new RuntimeException("123123123"));
                 emitter.onComplete();

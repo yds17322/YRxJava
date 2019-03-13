@@ -17,10 +17,12 @@ public abstract class Observable<T> implements ObservableSource<T> {
     }
 
     public Observable<T> switchUpThread(int threadType) {
+        // this == ObservableCreate
         return new ObservableSwitchUpThread<>(this, threadType);
     }
 
     public Observable<T> switchDownThread(int threadType) {
+        // this == ObservableSwitchUpThread
         return new ObservableSwitchDownThread<>(this, threadType);
     }
 
@@ -28,6 +30,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
     @Override
     public void subscribe(Observer<? super T> observer) {
         Log.e(TAG, "--subscribe :: " + this);
+        // 此时this == ObservableSwitchDownThread
         subscribeActual(observer);
     }
 

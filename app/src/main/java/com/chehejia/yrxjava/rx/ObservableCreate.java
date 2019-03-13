@@ -10,11 +10,14 @@ public class ObservableCreate<T> extends Observable<T> {
 
     public ObservableCreate(ObservableOnSubscribe<T> onSubscribe) {
         Log.e("yds", "ObservableCreate --");
+        // mOnSubscribe == Main中create的内部类
         this.mOnSubscribe = onSubscribe;
     }
 
     @Override
     protected void subscribeActual(Observer<? super T> observer) {
+        // observer == UpThreadObserver
+        // 调用subscribe，把observer回调到main中的内部类
         Log.e("yds", "ObservableCreate --subscribeActual");
         CreateEmitter<T> emitter = new CreateEmitter<T>(observer);
         observer.onSubscribe();
@@ -29,6 +32,7 @@ public class ObservableCreate<T> extends Observable<T> {
     class CreateEmitter<T> implements ObservableEmitter<T> {
         Observer<? super T> mObserver;
 
+        // observer == UpThreadObserver
         public CreateEmitter(Observer<? super T> observer) {
             this.mObserver = observer;
         }
@@ -40,6 +44,7 @@ public class ObservableCreate<T> extends Observable<T> {
 
         @Override
         public void onNext(T value) {
+            // 调用UpThreadObserver中的onNext
             mObserver.onNext(value);
         }
 
