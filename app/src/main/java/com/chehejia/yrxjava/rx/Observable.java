@@ -26,6 +26,12 @@ public abstract class Observable<T> implements ObservableSource<T> {
         return new ObservableSwitchDownThread<>(this, threadType);
     }
 
+    // map
+    public <R> Observable<R> map(Function<T, R> function) {
+        // 原有泛型 T 返回泛型 R
+        return (Observable<R>) new ObservableMap<T, R>(this, function);
+    }
+
     // 执行
     @Override
     public void subscribe(Observer<? super T> observer) {

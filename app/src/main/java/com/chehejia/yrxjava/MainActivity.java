@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.View;
 
 import com.chehejia.yrxjava.demo.A;
+import com.chehejia.yrxjava.rx.Function;
 import com.chehejia.yrxjava.rx.Observable;
 import com.chehejia.yrxjava.rx.ObservableEmitter;
 import com.chehejia.yrxjava.rx.ObservableOnSubscribe;
@@ -43,16 +44,23 @@ public class MainActivity extends AppCompatActivity {
                 emitter.onComplete();
             }
         })
+                .map(new Function<String, Integer>() {
+                    @Override
+                    public Integer apply(String s) {
+                        Log.i(TAG, "map-apply --> " + (Looper.myLooper() == Looper.getMainLooper()));
+                        return 333;
+                    }
+                })
                 .switchUpThread(Observable.NEW_THREAD)
                 .switchDownThread(Observable.MAIN_THREAD)
-                .subscribe(new Observer<String>() {
+                .subscribe(new Observer<Integer>() {
                     @Override
                     public void onSubscribe() {
                         Log.i(TAG, "subscribe --  onSubscribe");
                     }
 
                     @Override
-                    public void onNext(String s) {
+                    public void onNext(Integer s) {
                         Log.i(TAG, "onNext --> " + (Looper.myLooper() == Looper.getMainLooper()) + ", s : " + s);
                     }
 
